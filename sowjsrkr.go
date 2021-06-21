@@ -22,11 +22,7 @@ func main() {
 }
 
 func callback(context *gin.Context) {
-	params := context.Params
-
-	for k, v := range params {
-		fmt.Println("KEY: ", k, "VALUE: ", v)
-	}
+	fmt.Println(context.Request.URL.Query())
 }
 
 func welcome(context *gin.Context) {
