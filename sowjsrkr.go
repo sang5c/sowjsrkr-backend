@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
@@ -16,7 +17,16 @@ func main() {
 	router := gin.Default()
 	router.GET("/", helloWorld)
 	router.GET("/test", welcome)
+	router.GET("/auth/callback", callback)
 	router.Run()
+}
+
+func callback(context *gin.Context) {
+	params := context.Params
+
+	for k, v := range params {
+		fmt.Println("KEY: ", k, "VALUE: ", v)
+	}
 }
 
 func welcome(context *gin.Context) {
