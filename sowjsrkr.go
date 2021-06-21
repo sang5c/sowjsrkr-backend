@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
 )
 
 const (
@@ -25,7 +26,9 @@ func welcome(context *gin.Context) {
 }
 
 func helloWorld(context *gin.Context) {
+	conf := os.Getenv("CONF")
 	context.JSON(http.StatusOK, gin.H{
 		"HELLO": "WORLD",
+		"CONF":  conf,
 	})
 }
