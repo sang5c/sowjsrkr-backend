@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -25,11 +26,19 @@ func main() {
 func send(context *gin.Context) {
 	oauthUrl := "https://discord.com/api/oauth2/authorize?client_id=855464630897082368&permissions=0&redirect_uri=https%3A%2F%2Fsowjsrkr.herokuapp.com%2Fauth%2Fcallback&scope=bot"
 
-	_, err := http.Get(oauthUrl)
+	response, err := http.Get(oauthUrl)
 	if err != nil {
 		fmt.Println("error")
 		return
 	}
+
+	fmt.Println("STATUS: ", response.StatusCode)
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	fmt.Println(responseBody)
+
 }
 
 func callback(context *gin.Context) {
