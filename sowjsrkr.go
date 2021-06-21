@@ -18,7 +18,18 @@ func main() {
 	router.GET("/", helloWorld)
 	router.GET("/test", welcome)
 	router.GET("/auth/callback", callback)
+	router.GET("/send", send)
 	router.Run()
+}
+
+func send(context *gin.Context) {
+	oauthUrl := "https://discord.com/api/oauth2/authorize?client_id=855464630897082368&permissions=0&redirect_uri=https%3A%2F%2Fsowjsrkr.herokuapp.com%2Fauth%2Fcallback&scope=bot"
+
+	_, err := http.Get(oauthUrl)
+	if err != nil {
+		fmt.Println("error")
+		return
+	}
 }
 
 func callback(context *gin.Context) {
