@@ -37,7 +37,7 @@ func send(context *gin.Context) {
 	if err != nil {
 		return
 	}
-	fmt.Println(responseBody)
+	fmt.Println(string(responseBody))
 
 }
 
