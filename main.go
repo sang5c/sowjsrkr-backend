@@ -74,6 +74,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
 	}
 
+	if !strings.HasPrefix(m.Content, "!") {
+		return
+	}
+
 	split := strings.SplitN(m.Content, " ", 2)
 
 	command := split[0]
