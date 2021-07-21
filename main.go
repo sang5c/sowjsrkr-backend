@@ -11,12 +11,15 @@ import (
 )
 
 var (
-	Token    = "ODU1NDY0NjMwODk3MDgyMzY4.YMy3hQ.1dapRxZIbX6Q019g8avNcJSgLW8"
+	Token    = ""
 	response = map[string]func(string) string{
-		"ㅎㅇ":  func(str string) string { return "ㅎㅇ" },
 		"!추가": addUsers,
 	}
 )
+
+func init() {
+	Token = os.Getenv("TOKEN")
+}
 
 func addUsers(str string) string {
 	return str
@@ -65,6 +68,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// This isn't required in this specific example but it's a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
+	}
+
+	if m.Content == "ㅎㅇ" {
+		s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
 	}
 
 	split := strings.SplitN(m.Content, " ", 2)
