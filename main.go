@@ -1,32 +1,142 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 var (
 	Token    = ""
-	response = map[string]func(string) string{
+	response = map[string]func(Request) string{
+		"!도움": printHelp,
 		"!추가": addUsers,
+		"!제거": removeUsers,
+		"!총원": printUsers,
+		"!리셋": resetUsers,
+		"!섞어": shuffleUsers,
+		"!팀":  printTeam,
+		"!전송": sendHome,
 	}
+	users    []string
+	gdFlag   time.Time
+	commands string
+	team1    string
+	team2    string
 )
 
 func init() {
 	Token = os.Getenv("TOKEN")
+	gdFlag = time.Now()
+	commands = func() string {
+		var commands []string
+		for k := range response {
+			commands = append(commands, k)
+		}
+
+		return "`" + strings.Join(commands, "`, `") + "`"
+	}()
 }
 
-func addUsers(str string) string {
-	return str
+func printTeam(_ Request) string {
+	return fmt.Sprintf("`1팀: %s\n2팀: %s`", team1, team2)
+}
+
+func shuffleUsers(r Request) string {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(users), func(i, j int) {
+		users[i], users[j] = users[j], users[i]
+	})
+	team1 = strings.Join(users[:len(users)/2], ", ")
+	team2 = strings.Join(users[len(users)/2:], ", ")
+	return sendHome(r)
+}
+
+func printHelp(_ Request) string {
+	return commands
+}
+
+func resetUsers(_ Request) string {
+	users = []string{}
+	return "완료"
+}
+
+type Request struct {
+	command string
+	arg     string
+	session *discordgo.Session
+}
+
+func NewRequest(s string, session *discordgo.Session) (Request, error) {
+	if !strings.HasPrefix(s, "!") {
+		return Request{}, errors.New("not command")
+	}
+	split := strings.SplitN(s, " ", 2)
+
+	log.Println("receive command: ", s)
+
+	if len(split) != 2 {
+		split = append(split, "")
+	}
+
+	return Request{split[0], split[1], session}, nil
+
+}
+
+func printUsers(_ Request) string {
+	if len(users) == 0 {
+		return "empty!"
+	}
+	s := strings.Join(users, ", ")
+	return fmt.Sprintf("```Total: %d\nUsers: %s```", len(users), s)
+}
+
+func addUsers(r Request) string {
+	split := strings.Split(r.arg, ",")
+	for _, v := range split {
+		strings.Trim(v, " ")
+		if !contains(v) {
+			users = append(users, v)
+		}
+	}
+	return printUsers(r)
+}
+
+func removeUsers(r Request) string {
+	removeCount := 0
+	split := strings.Split(r.arg, ",")
+	for i, v := range split {
+		strings.Trim(v, " ")
+		if contains(v) {
+			users = append(users[:i-removeCount], users[i+1-removeCount:]...)
+			removeCount++
+		}
+	}
+	return printUsers(r)
+}
+
+func sendHome(r Request) string {
+	r.session.ChannelMessageSend("592275489100398594", printTeam(r))
+	return "완료!"
+}
+func contains(s string) bool {
+	for _, user := range users {
+		if user == s {
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
-
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
@@ -55,11 +165,6 @@ func main() {
 	dg.Close()
 }
 
-func containsKey(key string) bool {
-	_, ok := response[key]
-	return ok
-}
-
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the authenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -71,20 +176,20 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content == "ㅎㅇ" {
-		s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
+		fmt.Println(time.Since(gdFlag).String())
+
+		if time.Since(gdFlag) > 30*time.Minute {
+			gdFlag = time.Now()
+			s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
+		}
 	}
 
-	if !strings.HasPrefix(m.Content, "!") {
+	request, err := NewRequest(m.Content, s)
+	if err != nil {
 		return
 	}
 
-	split := strings.SplitN(m.Content, " ", 2)
-
-	command := split[0]
-	content := split[1]
-
-	if containsKey(command) {
-		f := response[command]
-		s.ChannelMessageSend(m.ChannelID, f(content))
+	if f, ok := response[request.command]; ok {
+		s.ChannelMessageSend(m.ChannelID, f(request))
 	}
 }
