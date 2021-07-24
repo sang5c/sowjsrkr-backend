@@ -26,6 +26,7 @@ var (
 		"!섞어": shuffleUsers,
 		"!팀":  printTeam,
 		"!전송": sendHome,
+		"!상태": setState,
 	}
 	users    []string
 	gdFlag   time.Time
@@ -33,6 +34,14 @@ var (
 	team1    string
 	team2    string
 )
+
+func setState(r Request) string {
+	err := r.session.UpdateGameStatus(0, r.arg)
+	if err != nil {
+		log.Println("game status error", err)
+	}
+	return "완료!"
+}
 
 func init() {
 	Token = os.Getenv("TOKEN")
@@ -48,7 +57,7 @@ func init() {
 }
 
 func printTeam(_ Request) string {
-	return fmt.Sprintf("`1팀: %s\n2팀: %s`", team1, team2)
+	return fmt.Sprintf("`1팀: %s`\n`2팀: %s`", team1, team2)
 }
 
 func shuffleUsers(r Request) string {
@@ -196,7 +205,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "ㅎㅇ" {
 		fmt.Println(time.Since(gdFlag).String())
-
 		if time.Since(gdFlag) > 30*time.Minute {
 			gdFlag = time.Now()
 			s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
