@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -137,6 +138,24 @@ func contains(s string) bool {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		_, err := fmt.Fprint(w, "hello world")
+		if err != nil {
+			panic("fail response")
+		}
+	})
+	go func() {
+		err := http.ListenAndServe(":"+port, nil)
+		if err != nil {
+			panic(fmt.Errorf("http server error"))
+		}
+	}()
+
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
