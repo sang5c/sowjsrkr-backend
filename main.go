@@ -20,7 +20,7 @@ var (
 	response = map[string]func(Request) string{
 		"!도움": printHelp,
 		"!추가": addUsers,
-		"!제거": removeUsers,
+		"!제거": removeUser,
 		"!총원": printUsers,
 		"!리셋": resetUsers,
 		"!섞어": shuffleUsers,
@@ -113,37 +113,39 @@ func addUsers(r Request) string {
 	split := strings.Split(r.arg, ",")
 	for _, v := range split {
 		strings.Trim(v, " ")
-		if !contains(v) {
+		contains, _ := contains(v)
+		if !contains {
 			users = append(users, v)
 		}
 	}
 	return printUsers(r)
 }
 
-func removeUsers(r Request) string {
-	removeCount := 0
-	split := strings.Split(r.arg, ",")
-	for i, v := range split {
-		strings.Trim(v, " ")
-		if contains(v) {
-			users = append(users[:i-removeCount], users[i+1-removeCount:]...)
-			removeCount++
-		}
+func removeUser(r Request) string {
+	username := strings.Trim(r.arg, " ")
+	contains, index := contains(username)
+	if contains {
+		users = removeIndex(index)
 	}
+
 	return printUsers(r)
+}
+
+func removeIndex(index int) []string {
+	return append(users[:index], users[index+1:]...)
 }
 
 func sendHome(r Request) string {
 	r.session.ChannelMessageSend("592275489100398594", printTeam(r))
 	return "완료!"
 }
-func contains(s string) bool {
-	for _, user := range users {
+func contains(s string) (bool, int) {
+	for i, user := range users {
 		if user == s {
-			return true
+			return true, i
 		}
 	}
-	return false
+	return false, -1
 }
 
 func main() {
