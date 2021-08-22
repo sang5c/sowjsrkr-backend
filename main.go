@@ -205,14 +205,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Content == "ㅎㅇ" {
-		fmt.Println(time.Since(gdFlag).String())
-		if time.Since(gdFlag) > 30*time.Minute {
-			gdFlag = time.Now()
-			s.ChannelMessageSend(m.ChannelID, "ㅎㅇ")
-		}
-	}
-
 	request, err := NewRequest(m.Content, s)
 	if err != nil {
 		return
